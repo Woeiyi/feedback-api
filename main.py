@@ -33,17 +33,15 @@ def send_negative_feedback_email(user_email: str, review: str, appointment_id: s
         msg["Subject"] = "We Value Your Feedback"
 
         body = f"""
-        Hi there,
+    Hi there,
 
         We noticed that your recent feedback from appointment {appointment_id} was negative:
 
         "{review}"
 
-        We sincerely apologize for any inconvenience caused. 
-        Could you please provide more details for future improvements?
+        We sincerely apologize for any inconvenience caused. Could you please provide more details for future improvements?
 
         Thank you for your understanding and please do not hesitate to contact us.
-
         Best regards,
         Support Team
         """
