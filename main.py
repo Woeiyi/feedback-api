@@ -13,8 +13,8 @@ model = tf.keras.models.load_model("sentiment_lstm_model.h5")
 word_index = joblib.load("tokenizer.pkl")
 
 # Email credentials for sending (demo purpose)
-SENDER_EMAIL = "your_school_email@gmail.com"
-SENDER_PASSWORD = "your_password"
+SENDER_EMAIL = "woeiyitwy@gmail.com"
+SENDER_PASSWORD = "esah kxwg hdch epge"
 
 app = FastAPI()
 
