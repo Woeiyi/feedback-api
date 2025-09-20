@@ -18,12 +18,24 @@ def home():
 @app.post("/predict/")
 def predict(review: str):
     # Convert review to sequence of integers
-    tokens = [word_index.get(w, 2) for w in review.lower().split()]
+    tokens = []
+    for w in review.lower().split():
+        idx = word_index.get(w)
+        if idx is not None and idx < 10000:  # respect num_words
+            tokens.append(idx + 3)  # +3 offset for reserved tokens
+        else:
+            tokens.append(2)  # unknown token
+    
+    # Pad sequence
     padded = pad_sequences([tokens], maxlen=200)
+    
+    # Predict
     pred = model.predict(padded)[0][0]
     sentiment = "positive" if pred >= 0.5 else "negative"
+    
     return {
         "review": review,
         "sentiment": sentiment,
         "score": float(pred)
     }
+
