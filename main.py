@@ -4,18 +4,10 @@ import numpy as np
 import joblib
 import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import socket
 
 # Load model + tokenizer
 model = tf.keras.models.load_model("sentiment_lstm_model.h5")
 word_index = joblib.load("tokenizer.pkl")
-
-# Email credentials for sending (demo purpose)
-SENDER_EMAIL = "woeiyitwy@gmail.com"
-SENDER_PASSWORD = "esah kxwg hdch epge"
 
 app = FastAPI()
 
@@ -23,60 +15,6 @@ app = FastAPI()
 @app.get("/")
 def home():
     return {"message": "✅ Sentiment API is running!"}
-
-
-def test_smtp_connection() -> bool:
-    """
-    Check if the server can connect to Gmail's SMTP over SSL (465).
-    Returns True if reachable, False otherwise.
-    """
-    try:
-        socket.create_connection(("smtp.gmail.com", 465), timeout=10)
-        print("✅ SMTP connectivity test: Can reach smtp.gmail.com:465")
-        return True
-    except Exception as e:
-        print(f"❌ SMTP connectivity test failed: {e}")
-        return False
-
-
-def send_negative_feedback_email(user_email: str, review: str, appointment_id: str):
-    """
-    Sends an automated email to the user apologizing for negative experience.
-    """
-    try:
-        # ✅ Test connection before sending
-        if not test_smtp_connection():
-            print("❌ Skipping email send because SMTP is unreachable.")
-            return
-
-        msg = MIMEMultipart()
-        msg["From"] = SENDER_EMAIL
-        msg["To"] = user_email
-        msg["Subject"] = "We Value Your Feedback"
-
-        body = f"""
-    Hi there,
-
-        We noticed that your recent feedback from appointment {appointment_id} was negative:
-
-        "{review}"
-
-        We sincerely apologize for any inconvenience caused. Could you please provide more details for future improvements?
-
-        Thank you for your understanding and please do not hesitate to contact us.
-        Best regards,
-        Support Team
-        """
-        msg.attach(MIMEText(body, "plain"))
-
-        # ✅ Connect to Gmail SMTP over SSL (port 465)
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.send_message(msg)
-        server.quit()
-        print(f"✅ Sent email to {user_email}")
-    except Exception as e:
-        print(f"❌ Failed to send email: {e}")
 
 
 @app.post("/predict/")
@@ -93,14 +31,11 @@ def predict(review: str, user_email: str, appointment_id: str):
     # Pad sequence
     padded = pad_sequences([tokens], maxlen=200)
 
-    # Predict
+    # Predict sentiment
     pred = model.predict(padded)[0][0]
     sentiment = "positive" if pred >= 0.5 else "negative"
 
-    # Send email if negative
-    if sentiment == "negative":
-        send_negative_feedback_email(user_email, review, appointment_id)
-
+    # ✅ Only return sentiment, no email sending
     return {
         "review": review,
         "sentiment": sentiment,
