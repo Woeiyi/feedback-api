@@ -25,15 +25,18 @@ def home():
     return {"message": "✅ Sentiment API is running!"}
 
 
-def test_smtp_connection():
+def test_smtp_connection() -> bool:
     """
     Check if the server can connect to Gmail's SMTP.
+    Returns True if reachable, False otherwise.
     """
     try:
         socket.create_connection(("smtp.gmail.com", 587), timeout=10)
         print("✅ SMTP connectivity test: Can reach smtp.gmail.com:587")
+        return True
     except Exception as e:
         print(f"❌ SMTP connectivity test failed: {e}")
+        return False
 
 
 def send_negative_feedback_email(user_email: str, review: str, appointment_id: str):
@@ -41,6 +44,11 @@ def send_negative_feedback_email(user_email: str, review: str, appointment_id: s
     Sends an automated email to the user apologizing for negative experience.
     """
     try:
+        # ✅ Test connection before sending
+        if not test_smtp_connection():
+            print("❌ Skipping email send because SMTP is unreachable.")
+            return
+
         msg = MIMEMultipart()
         msg["From"] = SENDER_EMAIL
         msg["To"] = user_email
@@ -103,6 +111,4 @@ def predict(review: str, user_email: str, appointment_id: str):
 
 # For running locally
 if __name__ == "__main__":
-    # Run SMTP connectivity test once at startup
-    test_smtp_connection()
     uvicorn.run(app, host="0.0.0.0", port=8000)
