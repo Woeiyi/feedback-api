@@ -27,12 +27,12 @@ def home():
 
 def test_smtp_connection() -> bool:
     """
-    Check if the server can connect to Gmail's SMTP.
+    Check if the server can connect to Gmail's SMTP over SSL (465).
     Returns True if reachable, False otherwise.
     """
     try:
-        socket.create_connection(("smtp.gmail.com", 587), timeout=10)
-        print("✅ SMTP connectivity test: Can reach smtp.gmail.com:587")
+        socket.create_connection(("smtp.gmail.com", 465), timeout=10)
+        print("✅ SMTP connectivity test: Can reach smtp.gmail.com:465")
         return True
     except Exception as e:
         print(f"❌ SMTP connectivity test failed: {e}")
@@ -69,9 +69,8 @@ def send_negative_feedback_email(user_email: str, review: str, appointment_id: s
         """
         msg.attach(MIMEText(body, "plain"))
 
-        # Connect to Gmail SMTP server
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
+        # ✅ Connect to Gmail SMTP over SSL (port 465)
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.send_message(msg)
         server.quit()
