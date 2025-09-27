@@ -7,6 +7,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import socket
 
 # Load model + tokenizer
 model = tf.keras.models.load_model("sentiment_lstm_model.h5")
@@ -18,9 +19,22 @@ SENDER_PASSWORD = "esah kxwg hdch epge"
 
 app = FastAPI()
 
+
 @app.get("/")
 def home():
     return {"message": "✅ Sentiment API is running!"}
+
+
+def test_smtp_connection():
+    """
+    Check if the server can connect to Gmail's SMTP.
+    """
+    try:
+        socket.create_connection(("smtp.gmail.com", 587), timeout=10)
+        print("✅ SMTP connectivity test: Can reach smtp.gmail.com:587")
+    except Exception as e:
+        print(f"❌ SMTP connectivity test failed: {e}")
+
 
 def send_negative_feedback_email(user_email: str, review: str, appointment_id: str):
     """
@@ -57,6 +71,7 @@ def send_negative_feedback_email(user_email: str, review: str, appointment_id: s
     except Exception as e:
         print(f"❌ Failed to send email: {e}")
 
+
 @app.post("/predict/")
 def predict(review: str, user_email: str, appointment_id: str):
     # Convert review to sequence of integers
@@ -67,10 +82,10 @@ def predict(review: str, user_email: str, appointment_id: str):
             tokens.append(idx + 3)  # +3 offset for reserved tokens
         else:
             tokens.append(2)  # unknown token
-    
+
     # Pad sequence
     padded = pad_sequences([tokens], maxlen=200)
-    
+
     # Predict
     pred = model.predict(padded)[0][0]
     sentiment = "positive" if pred >= 0.5 else "negative"
@@ -78,13 +93,16 @@ def predict(review: str, user_email: str, appointment_id: str):
     # Send email if negative
     if sentiment == "negative":
         send_negative_feedback_email(user_email, review, appointment_id)
-    
+
     return {
         "review": review,
         "sentiment": sentiment,
         "score": float(pred)
     }
 
+
 # For running locally
 if __name__ == "__main__":
+    # Run SMTP connectivity test once at startup
+    test_smtp_connection()
     uvicorn.run(app, host="0.0.0.0", port=8000)
